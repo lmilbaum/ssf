@@ -9,15 +9,15 @@ _image: #Image & {}
 _REPOSITORY: *"ttl.sh" | string @tag(repository)
 _APP_IMAGE: *"\(_REPOSITORY)/\(_image.name)" | string @tag(appImage)
 
-secret: "kube-api-secret": {
+k8s: secret: "kube-api-secret": {
 	metadata: annotations: "kubernetes.io/service-account.name": "pipeline-account"
 	type: "kubernetes.io/service-account-token"
 }
 
-serviceAccount: "pipeline-account": {
+k8s: serviceAccount: "pipeline-account": {
 }
 
-clusterRole: "pipeline-role": rules: [{
+k8s: clusterRole: "pipeline-role": rules: [{
 	apiGroups: [""]
 	resources: ["services"]
 	verbs: ["get", "create", "update", "patch"]
@@ -27,7 +27,7 @@ clusterRole: "pipeline-role": rules: [{
 	verbs: ["get", "create", "update", "patch"]
 }]
 
-clusterRoleBinding: "pipeline-role-binding": {
+k8s: clusterRoleBinding: "pipeline-role-binding": {
 	roleRef: {
 		apiGroup: "rbac.authorization.k8s.io"
 		kind:     "ClusterRole"
@@ -41,16 +41,16 @@ clusterRoleBinding: "pipeline-role-binding": {
 }
 
 // generate a PVC for each pipelineRun
-persistentVolumeClaim: {
-	for pr in pipelineRun {
-		"\(pr.metadata.generateName)source-ws-pvc": spec: {
+for pr in k8s.pipelineRun {
+	k8s: persistentVolumeClaim: "\(pr.metadata.generateName)source-ws-pvc": {
+		spec: {
 			accessModes: ["ReadWriteOnce"]
 			resources: requests: storage: "500Mi"
 		}
 	}
 }
 
-pipelineRun: [Name=_]: spec: workspaces: [{
+k8s: pipelineRun: [Name=_]: spec: workspaces: [{
 	name: *"\(Name)ws" | string
 	persistentVolumeClaim: claimName: "\(Name)source-ws-pvc"
 }, ...]
