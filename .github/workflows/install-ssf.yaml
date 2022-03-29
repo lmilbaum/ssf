@@ -70,3 +70,7 @@ jobs:
           cosign verify-attestation --key k8s://tekton-chains/signing-secrets "${IMAGE_URL}"
 
           kubectl wait --timeout=5m --for=condition=ready pods -l app=picalc -n prod
+      - name: Run maven pipeline
+        run: |
+          make example-maven
+          tkn pr logs --last -f
